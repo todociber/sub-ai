@@ -11,3 +11,4 @@ pywhispercpp==1.1.1
 dl_translate==0.2.6
 faster_whisper==0.8
 whisperx @ git+https://github.com/m-bain/whisperx@0ae0d49d1dd789322181f579c71719f4cac83ae1
+python-dotenv==1.0.0

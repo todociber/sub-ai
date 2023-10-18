@@ -5,3 +5,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    ports:
+        - '8501:8501'
+    expose:
+        - '8501'
+    volumes:
+      - '${local_video_files}:/media_files'
+      - './src:/subsai/src'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]

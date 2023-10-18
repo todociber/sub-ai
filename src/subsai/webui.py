@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/.env python
 # -*- coding: utf-8 -*-
 
 """
@@ -11,6 +11,8 @@ import os.path
 import shutil
 import sys
 import tempfile
+import os
+from dotenv import load_dotenv
 from base64 import b64encode
 from pathlib import Path
 
@@ -278,6 +280,47 @@ def webui() -> None:
     notification_placeholder = st.empty()
 
     with st.sidebar:
+        with st.expander('File compressed', expanded=True):
+            st.info('Convert all files in a folder to mp3 or resize resolution of all files in a folder')
+            folder_path_converter = st.text_input('Media Folder path', help='Absolute path of files folder')
+            selecter_resolution = st.selectbox("Select resolution", ['144p','240p','360p','480p', '720p', '1080p'], index=0,
+                                     help='Select resolution to convert')
+            check_box_mp3 = st.checkbox('Convert all files to mp3', value=False, help='Convert mp4 files to mp3 files')
+            button_convert = st.button('Convert', type='primary')
+            if button_convert:
+                #valid if folder path is not empty
+                if folder_path_converter == '' or folder_path_converter is None or selecter_resolution == '' or selecter_resolution is None:
+                    st.error('Folder path is empty')
+                else:
+                    #get all files in folder and convert mp4 to mp3
+                    for file in os.listdir(folder_path_converter):
+                        if check_box_mp3:
+                            if file.endswith(".mp4"):
+                                file_path = os.path.join(folder_path_converter, file)
+                                tmp_dir_path = folder_path_converter
+                                file_path_mp3 = os.path.join(tmp_dir_path, file.replace(".mp4", ".mp3"))
+                                os.system(f"ffmpeg -i {file_path} -vn -ar 44100 -ac 2 -ab 192k -f mp3 {file_path_mp3}")
+                                st.success(f'Converted file {file_path}', icon="✅")
+                        else:
+                            #get all files in folder and reduce resolution to 480p and reduce size
+                            if file.endswith(".mp4"):
+                                scale_array = selecter_resolution.split('p')
+                                resolutions_available = {
+                                    "144": "256:144",
+                                    "240": "426:240",
+                                    "360": "640:360",
+                                    "480": "854:480",
+                                    "720": "1280:720",
+                                    "1080": "1920:1080"
+                                }
+                                selected_resolution = resolutions_available[scale_array[0]]
+                                file_path = os.path.join(folder_path_converter, file)
+                                tmp_dir_path = folder_path_converter
+                                file_path_mp4 = os.path.join(tmp_dir_path, file.replace(".mp4", "_"+ selecter_resolution +".mp4"))
+                                os.system(f"ffmpeg -i {file_path} -vf scale={selected_resolution} {file_path_mp4}")
+                                st.success(f'Converted file {file_path}', icon="✅")
+
+
         with st.expander('Media file', expanded=True):
             file_mode = st.selectbox("Select file mode", ['Local path', 'Upload'], index=0,
                                      help='Use `Local Path` if you are on a local machine, or use `Upload` to '
@@ -527,7 +570,12 @@ def run():
     if runtime.exists():
         webui()
     else:
-        sys.argv = ["streamlit", "run", __file__, "--theme.base", "dark"] + sys.argv
+        # Cargar variables de ambiente desde el archivo ..env
+        load_dotenv()
+
+        # Acceder a las variables de ambiente
+        max_file_size = os.getenv('MAX_FILE_SIZE')
+        sys.argv = ["streamlit", "run", __file__, "--theme.base", "dark","--server.maxMessageSize", max_file_size, "--server.maxUploadSize", max_file_size] + sys.argv
         sys.exit(stcli.main())
 
 
